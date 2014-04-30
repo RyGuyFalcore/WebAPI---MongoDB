@@ -1,0 +1,135 @@
+﻿@section scripts{
+    <script type="text/javascript">
+
+        var currentId;
+        var listId;
+        var deleteLink;
+        var uniqueId = 1;
+
+         $(function()
+         {
+             $.getJSON('/api/contact', function(contactsJsonPayload)
+             {
+                 $(contactsJsonPayload).each(function(i, item)
+                 {
+                     var copy = $('<p>' + item.Name + " " + item.Id + '</p>').clone(true).appendTo('#displayTemplate');
+                     var contactDivId = 'contact_' + uniqueId;
+                     copy.attr('id', contactDivId);
+
+                     deleteLink = $('<input type="button" id="deleteContact" value="Delete" />');
+                     deleteLink.appendTo(copy);
+                     deleteLink.click(function () {
+                         $.ajax({
+                             url: '/api/contact/' + item.Id,
+                             type: 'DELETE',
+                             success: function () {
+                                 copy.remove();
+                             }
+                         });
+                     });
+                     uniqueId++;
+                 });
+             });
+             
+         });
+
+        $('#saveContact').click(function () {
+            $.post("/api/contact",
+                $("#saveContactForm").serialize(),
+                function (value) {
+
+                    var copy = $('<p>' + value.Name + " " + value.Id + '</p>').clone(true).appendTo('#displayTemplate');
+                    var contactDivId = 'contact_' + uniqueId;
+                    copy.attr('id', contactDivId);
+
+                    deleteLink = $('<input type="button" id="deleteContact" value="Delete" />');
+                    deleteLink.appendTo(copy);
+                    deleteLink.click(function () {                    
+                        $.ajax({
+                            url: '/api/contact/' + value.Id,
+                            type: 'DELETE',
+                            success: function () {
+                                copy.remove();
+                            }
+                        });
+                    });
+                },
+                "json"
+                );
+            $('#nameBox').val("");
+            $('#phoneBox').val("");
+            $('#emailBox').val("");
+            uniqueId++;
+        });
+
+        $('#searchContact').click(function () {
+            $('#name').val("");
+            $('#phone').val("");
+            $('#email').val("");
+            $('#lastModified').val("");
+
+            $.get("/api/contact/" + $('#searchBoxId').val(),
+                function (value) {
+                    $('#name').append(value.Name);
+                    $('#phone').append(value.Phone);
+                    $('#email').append(value.Email);
+                    $('#lastModified').append(value.LastModified);
+                },
+                "json"
+                );
+            $('#searchBoxId').val("");
+        });           
+    </script>
+}
+
+<div class="Division">
+    <h2>Create a New Contact</h2>
+    <form id="saveContactForm" method="post">
+        <p>
+            <label for="contactName">Contact Name:</label>
+            <input type="text" id="nameBox" name="Name" />
+        </p>
+        <p>
+            <label for="contactPhone">Contact Phone:</label>
+            <input type="text" id="phoneBox" name="Phone" />
+        </p>
+        <p>
+            <label for="contactEmail">Contact Email:</label>
+            <input type="text" id="emailBox" name="Email" />
+        </p>
+        <input type="button" id="saveContact" value="Save" />
+    </form>
+    <h2>MongoDB Contents</h2>
+
+    <p id="displayTemplate">
+    </p>
+</div>
+
+<div class="Division">
+    <h2>Search For a Contact</h2>
+    <form id="searchContactForm" method="get">
+        <p>
+            <label for="search">Search Contact By Id:</label>
+            <input type="text" id="searchBoxId" name="searchId" />
+        </p>
+        <input type="button" id="searchContact" value="Search" />
+    </form>
+</div>
+
+<div class="Division">
+    <h2>Contact Information</h2>
+    <div class="contactDisplay">
+        <label>Name:
+            <output id="name"></output>
+        </label>
+        <label>Phone:
+            <output id="phone"></output>
+        </label>
+        <label>Email:
+            <output id="email"></output>
+        </label>
+        <label>Last Modified:
+            <output id="lastModified"></output>
+        </label>
+    </div>
+</div>
